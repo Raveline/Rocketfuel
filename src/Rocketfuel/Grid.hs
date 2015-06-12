@@ -36,16 +36,16 @@ emptyRepeted l = do groups <- return . group $ l
                     result <- mapM emptyAndLogIfAboveThree groups
                     return . concat $ result
 
-rotateGrid :: Grid -> Grid
 -- | Basic utility to get a clockwise 90° rotation on the grid,
 -- useful to handle columns as if they were lines.
 -- 
 -- >>> rotateGrid [[Fuel,Repair,Trade],[Fuel,Shoot,Navigate],[Fuel,Trade,Empty]]
 -- [[Fuel,Fuel,Fuel],[Repair,Shoot,Trade],[Trade,Navigate,Empty]]
+rotateGrid :: Grid -> Grid
 rotateGrid = transpose
 
-unrotateGrid :: Grid -> Grid
 -- | Basic utility to get a 90° counterclockwise 90° rotation on the grid.
 -- >>> rotateGrid [[Fuel,Fuel,Fuel],[Repair,Shoot,Trade],[Trade,Navigate,Empty]]
 -- [[Fuel,Repair,Trade],[Fuel,Shoot,Navigate],[Fuel,Trade,Empty]]
+unrotateGrid :: Grid -> Grid
 unrotateGrid = transpose . transpose . transpose
