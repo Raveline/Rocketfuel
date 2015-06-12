@@ -32,6 +32,6 @@ emptyAndLogIfAboveThree line
     | otherwise = return line
 
 emptyRepeted :: Line -> Writer [Effect] Line
-emptyRepeted l = return . group $ l 
-                 >>= mapM emptyAndLogIfAboveThree
-                 >>= concat
+emptyRepeted l = do groups <- return . group $ l 
+                    result <- mapM emptyAndLogIfAboveThree groups
+                    return . concat $ result
