@@ -19,7 +19,7 @@ data Cell
     | Empty
     deriving (Eq, Show, Enum)
 
-type Grid = [[Cell]]
+type Grid = [Line]
 type Line = [Cell]
 type Idx = Int
 type Length = Int
@@ -49,3 +49,12 @@ rotateGrid = transpose
 -- [[Fuel,Repair,Trade],[Fuel,Shoot,Navigate],[Fuel,Trade,Empty]]
 unrotateGrid :: Grid -> Grid
 unrotateGrid = transpose . transpose . transpose
+
+emptyGrid :: Grid -> Writer [Effect] Grid
+emptyGrid g = emptyLines g >>= emptyColumns
+    where emptyLines :: Grid -> Writer [Effect] Grid
+          emptyLines = mapM emptyRepeted
+          emptyColumns :: Grid -> Writer [Effect] Grid
+          emptyColumns g = do rotated <- return $ rotateGrid g
+                              columnsEmptied <- emptyLines rotated
+                              return $ unrotateGrid $ columnsEmptied
