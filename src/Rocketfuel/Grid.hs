@@ -37,6 +37,9 @@ generateRandomCell = getRandomR'(Fuel, Navigate)
 generateRandomLine :: (MonadRandom r) => r Line
 generateRandomLine = sequence (replicate 8 generateRandomCell)
 
+generateRandomGrid :: (MonadRandom r) => r Grid
+generateRandomGrid = sequence (replicate 8 generateRandomLine)
+
 type Grid = [Line]
 type Line = [Cell]
 
