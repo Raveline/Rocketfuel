@@ -1,11 +1,15 @@
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}  
+
 module Rocketfuel.Grid (
     Cell (..), 
+    Effect(..),
     Grid,
-    Line
+    Line,
 ) where
 
 import Data.List
 import Control.Monad.Writer
+import Control.Monad.Random
 
 data Effect = Effect { _type :: Cell,
                        _size :: Int }
@@ -17,12 +21,24 @@ data Cell
     | Shoot
     | Navigate
     | Empty
-    deriving (Eq, Show, Enum)
+    deriving (Eq, Show, Enum, Bounded)
+
+-- These lines allow us to run random and randomR on an enum
+boundedEnumRandomR :: (Bounded a, Enum a, RandomGen g) =>
+                      (a, a) -> g -> (a, g)
+boundedEnumRandomR (x, y) g = case randomR (fromEnum x, fromEnum y) g of
+                                (r, g') -> (toEnum r, g')
+getRandomR' :: (MonadRandom m, Enum a, Bounded a) => (a,a) -> m a
+getRandomR' (a, b) = uniform [a..b]
+
+generateRandomCell :: (MonadRandom r) => r Cell
+generateRandomCell = getRandomR'(Fuel, Navigate)
+
+generateRandomLine :: (MonadRandom r) => r Line
+generateRandomLine = sequence (replicate 8 generateRandomCell)
 
 type Grid = [Line]
 type Line = [Cell]
-type Idx = Int
-type Length = Int
 
 emptyAndLogIfAboveThree :: Line -> Writer [Effect] Line
 emptyAndLogIfAboveThree line
