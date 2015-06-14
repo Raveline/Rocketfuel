@@ -55,6 +55,6 @@ emptyGrid g = emptyLines g >>= emptyColumns
     where emptyLines :: Grid -> Writer [Effect] Grid
           emptyLines = mapM emptyRepeted
           emptyColumns :: Grid -> Writer [Effect] Grid
-          emptyColumns g = do rotated <- return $ rotateGrid g
+          emptyColumns g = do let rotated = rotateGrid g
                               columnsEmptied <- emptyLines rotated
-                              return $ unrotateGrid $ columnsEmptied
+                              return $ unrotateGrid columnsEmptied
