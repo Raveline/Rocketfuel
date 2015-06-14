@@ -5,6 +5,7 @@ module Rocketfuel.Grid (
     Effect(..),
     Grid,
     Line,
+    generateRandomGrid
 ) where
 
 import Data.List
