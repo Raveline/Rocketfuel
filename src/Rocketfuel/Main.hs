@@ -6,8 +6,8 @@ main = generateRandomGrid >>= displayGrid
 displayGrid :: Grid -> IO ()
 displayGrid = mapM_ displayLine
 
-displayLine :: [Cell] -> IO ()
-displayLine l = let asString = map cellToChar l in 
+displayLine :: [Maybe Cell] -> IO ()
+displayLine l = let asString = map (maybe ' ' cellToChar) l in 
               putStrLn asString
 
 cellToChar :: Cell -> Char
@@ -16,4 +16,3 @@ cellToChar Repair = 'R'
 cellToChar Trade = 'T'
 cellToChar Shoot = 'S'
 cellToChar Navigate = 'N'
-cellToChar Empty = ' '
