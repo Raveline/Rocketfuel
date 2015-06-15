@@ -78,3 +78,31 @@ emptyGrid g = emptyLines g >>= emptyColumns
           emptyColumns g = do let rotated = rotateGrid g
                               columnsEmptied <- emptyLines rotated
                               return $ unrotateGrid columnsEmptied
+
+isEmptyCell :: Cell -> Bool
+isEmptyCell Empty = True
+isEmptyCell _ = False
+
+-- In order to simulate gravity, we proceed like this :
+-- 1°) We prepend to the grid a generated line
+-- (this is done in another function, to keep this one pure)
+-- The generated line CANNOT contain empty cells.
+-- 2°) We rotate the grid, so as to be able to map on its column.
+-- 3°) For each column, apply this simple rule :
+--     - If the current element is not empty...
+--     - and the next element is empty...
+--     - ... then the current element will take its place
+-- This will make all cells go down one notch if they should.
+-- Then, new possible match should be checked again before running
+-- this till there is no change.
+gravity :: Grid -> Grid
+gravity = unrotateGrid . map gravityColumn . rotateGrid
+    where 
+          gravityColumn :: Line -> Line
+          gravityColumn = until (filledAtBottom) falling
+          filledAtBottom :: Line -> Bool
+          filledAtBottom = not . any (isEmptyCell) . snd . break (isEmptyCell)
+          falling :: Line -> Line
+          falling (x:Empty:ys) = Empty:falling (x:ys)
+          falling (x:y:ys) = x:falling (y:ys)
+          falling ys = ys
