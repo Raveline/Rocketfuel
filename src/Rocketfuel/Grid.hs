@@ -9,6 +9,7 @@ module Rocketfuel.Grid (
 ) where
 
 import Data.List
+import Data.Maybe
 import Control.Monad.Writer
 import Control.Monad.Random
 
@@ -21,7 +22,6 @@ data Cell
     | Trade
     | Shoot
     | Navigate
-    | Empty
     deriving (Eq, Show, Enum, Bounded)
 
 -- These lines allow us to run random and randomR on an enum
@@ -36,20 +36,21 @@ generateRandomCell :: (MonadRandom r) => r Cell
 generateRandomCell = getRandomR'(Fuel, Navigate)
 
 generateRandomLine :: (MonadRandom r) => r Line
-generateRandomLine = sequence (replicate 8 generateRandomCell)
+generateRandomLine = sequence (replicate 8 (generateRandomCell >>= return . Just))
 
 generateRandomGrid :: (MonadRandom r) => r Grid
 generateRandomGrid = sequence (replicate 8 generateRandomLine)
 
 type Grid = [Line]
-type Line = [Cell]
+type Line = [Maybe Cell]
 
 emptyAndLogIfAboveThree :: Line -> Writer [Effect] Line
 emptyAndLogIfAboveThree line
-    | length line >= 3 = let effect = [Effect (head line) (length line)] in
+    | length line' >= 3 = let effect = [Effect (head line') (length line')] in
                          tell effect
-                         >> mapM (\_ -> return Empty) line
+                         >> mapM (\_ -> return Nothing) line
     | otherwise = return line
+    where line' = catMaybes line
 
 emptyRepeted :: Line -> Writer [Effect] Line
 emptyRepeted l = do groups <- return . group $ l 
@@ -79,10 +80,6 @@ emptyGrid g = emptyLines g >>= emptyColumns
                               columnsEmptied <- emptyLines rotated
                               return $ unrotateGrid columnsEmptied
 
-isEmptyCell :: Cell -> Bool
-isEmptyCell Empty = True
-isEmptyCell _ = False
-
 -- In order to simulate gravity, we proceed like this :
 -- 1°) We prepend to the grid a generated line
 -- (this is done in another function, to keep this one pure)
@@ -101,8 +98,8 @@ gravity = unrotateGrid . map gravityColumn . rotateGrid
           gravityColumn :: Line -> Line
           gravityColumn = until (filledAtBottom) falling
           filledAtBottom :: Line -> Bool
-          filledAtBottom = not . any (isEmptyCell) . snd . break (isEmptyCell)
+          filledAtBottom = not . any (isNothing) . snd . break (isNothing)
           falling :: Line -> Line
-          falling (x:Empty:ys) = Empty:falling (x:ys)
+          falling (x:Nothing:ys) = Nothing:falling (x:ys)
           falling (x:y:ys) = x:falling (y:ys)
           falling ys = ys
