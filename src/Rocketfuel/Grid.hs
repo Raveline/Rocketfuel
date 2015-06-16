@@ -1,11 +1,10 @@
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}  
-
 module Rocketfuel.Grid (
     Cell (..), 
     Effect(..),
     Grid,
     Line,
-    generateRandomGrid
+    generateRandomGrid,
+    afterMove
 ) where
 
 import Data.List
@@ -25,10 +24,6 @@ data Cell
     deriving (Eq, Show, Enum, Bounded)
 
 -- These lines allow us to run random and randomR on an enum
-boundedEnumRandomR :: (Bounded a, Enum a, RandomGen g) =>
-                      (a, a) -> g -> (a, g)
-boundedEnumRandomR (x, y) g = case randomR (fromEnum x, fromEnum y) g of
-                                (r, g') -> (toEnum r, g')
 getRandomR' :: (MonadRandom m, Enum a, Bounded a) => (a,a) -> m a
 getRandomR' (a, b) = uniform [a..b]
 
@@ -36,10 +31,10 @@ generateRandomCell :: (MonadRandom r) => r Cell
 generateRandomCell = getRandomR'(Fuel, Navigate)
 
 generateRandomLine :: (MonadRandom r) => r Line
-generateRandomLine = sequence (replicate 8 (generateRandomCell >>= return . Just))
+generateRandomLine = replicateM 8 (liftM Just generateRandomCell)
 
 generateRandomGrid :: (MonadRandom r) => r Grid
-generateRandomGrid = sequence (replicate 8 generateRandomLine)
+generateRandomGrid = replicateM 8 generateRandomLine
 
 type Grid = [Line]
 type Line = [Maybe Cell]
@@ -71,14 +66,16 @@ rotateGrid = transpose
 unrotateGrid :: Grid -> Grid
 unrotateGrid = transpose . transpose . transpose
 
+-- | The main matching function that will look for matches in lines and columns,
+-- and log each matches.
 emptyGrid :: Grid -> Writer [Effect] Grid
 emptyGrid g = emptyLines g >>= emptyColumns
     where emptyLines :: Grid -> Writer [Effect] Grid
           emptyLines = mapM emptyRepeted
           emptyColumns :: Grid -> Writer [Effect] Grid
-          emptyColumns g = do let rotated = rotateGrid g
-                              columnsEmptied <- emptyLines rotated
-                              return $ unrotateGrid columnsEmptied
+          emptyColumns g' = do let rotated = rotateGrid g'
+                               columnsEmptied <- emptyLines rotated
+                               return $ unrotateGrid columnsEmptied
 
 -- |In order to simulate gravity, we proceed like this :
 -- 1°) We prepend to the grid a generated line
@@ -89,6 +86,7 @@ emptyGrid g = emptyLines g >>= emptyColumns
 --     - If the current element is not empty...
 --     - and the next element is empty...
 --     - ... then the current element will take its place
+-- 4°) Remove the first line, containing the generated, random cells
 -- This will make all cells go down one notch if they should.
 -- Then, new possible match should be checked again before running
 -- this till there is no change.
@@ -96,10 +94,10 @@ emptyGrid g = emptyLines g >>= emptyColumns
 -- >>> gravity [[Just Fuel,Just Fuel,Just Repair,Just Shoot],[Nothing,Nothing,Nothing,Nothing],[Just Fuel,Nothing,Just Trade,Nothing]]
 -- [[Nothing,Nothing,Nothing,Nothing],[Just Fuel,Nothing,Just Repair,Nothing],[Just Fuel,Just Fuel,Just Trade,Just Shoot]]
 gravity :: Grid -> Grid
-gravity = unrotateGrid . map gravityColumn . rotateGrid
+gravity = tail . unrotateGrid . map gravityColumn . rotateGrid
     where 
           gravityColumn :: Line -> Line
-          gravityColumn = until (filledAtBottom) falling
+          gravityColumn = until filledAtBottom falling
           filledAtBottom :: Line -> Bool
           filledAtBottom = anyNull . break isNothing
           falling :: Line -> Line
@@ -107,3 +105,30 @@ gravity = unrotateGrid . map gravityColumn . rotateGrid
           falling (x:y:ys) = x:falling (y:ys)
           falling ys = ys
           anyNull (f, s) = null f || null s
+
+-- |Used before calling gravity. 
+prependGrid :: (MonadRandom r) => Grid -> r Grid
+prependGrid ls = do newLine <- generateRandomLine 
+                    return $ newLine:ls
+
+containsEmptyCells :: Grid -> Bool
+containsEmptyCells = all (any isNothing)
+
+-- | Call gravity till there is no empty cell left in the grid
+gravityLoop :: (MonadRandom r) => Grid -> r Grid
+gravityLoop g
+    | containsEmptyCells g  = liftM gravity (prependGrid g) >>= gravityLoop
+    | otherwise =  return g
+
+-- | After a given move, we must :
+-- - Check for matchs.
+-- - If matches were made, apply gravity and loop.
+-- - If no matches were made, return the grid and the effects.
+afterMove :: (MonadRandom r) => Grid -> r (Grid, [Effect])
+afterMove = afterMove' []
+    where
+        afterMove' :: (MonadRandom r) => [Effect] -> Grid -> r (Grid, [Effect])
+        afterMove' eff g = case runWriter (emptyGrid g) of
+                            (g', []) -> return (g', eff)
+                            (g', e) -> do afterGravity <- gravityLoop g'
+                                          afterMove' (eff ++ e) afterGravity
