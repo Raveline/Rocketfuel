@@ -60,14 +60,14 @@ emptyRepeted l = do groups <- return . group $ l
 -- | Basic utility to get a clockwise 90° rotation on the grid,
 -- useful to handle columns as if they were lines.
 -- 
--- >>> rotateGrid [[Fuel,Repair,Trade],[Fuel,Shoot,Navigate],[Fuel,Trade,Empty]]
--- [[Fuel,Fuel,Fuel],[Repair,Shoot,Trade],[Trade,Navigate,Empty]]
+-- >>> rotateGrid [[Just Fuel,Just Repair,Just Trade],[Just Fuel,Just Shoot,Just Navigate],[Just Fuel,Just Trade,Just Trade]]
+-- [[Just Fuel,Just Fuel,Just Fuel],[Just Repair,Just Shoot,Just Trade],[Just Trade,Just Navigate,Just Trade]]
 rotateGrid :: Grid -> Grid
 rotateGrid = transpose
 
 -- | Basic utility to get a 90° counterclockwise 90° rotation on the grid.
--- >>> rotateGrid [[Fuel,Fuel,Fuel],[Repair,Shoot,Trade],[Trade,Navigate,Empty]]
--- [[Fuel,Repair,Trade],[Fuel,Shoot,Navigate],[Fuel,Trade,Empty]]
+-- >>> rotateGrid [[Just Fuel,Just Fuel,Just Fuel],[Just Repair,Just Shoot,Just Trade],[Just Trade,Just Navigate,Nothing]]
+-- [[Just Fuel,Just Repair,Just Trade],[Just Fuel,Just Shoot,Just Navigate],[Just Fuel,Just Trade,Nothing]]
 unrotateGrid :: Grid -> Grid
 unrotateGrid = transpose . transpose . transpose
 
@@ -80,7 +80,7 @@ emptyGrid g = emptyLines g >>= emptyColumns
                               columnsEmptied <- emptyLines rotated
                               return $ unrotateGrid columnsEmptied
 
--- In order to simulate gravity, we proceed like this :
+-- |In order to simulate gravity, we proceed like this :
 -- 1°) We prepend to the grid a generated line
 -- (this is done in another function, to keep this one pure)
 -- The generated line CANNOT contain empty cells.
@@ -92,14 +92,18 @@ emptyGrid g = emptyLines g >>= emptyColumns
 -- This will make all cells go down one notch if they should.
 -- Then, new possible match should be checked again before running
 -- this till there is no change.
+--
+-- >>> gravity [[Just Fuel,Just Fuel,Just Repair,Just Shoot],[Nothing,Nothing,Nothing,Nothing],[Just Fuel,Nothing,Just Trade,Nothing]]
+-- [[Nothing,Nothing,Nothing,Nothing],[Just Fuel,Nothing,Just Repair,Nothing],[Just Fuel,Just Fuel,Just Trade,Just Shoot]]
 gravity :: Grid -> Grid
 gravity = unrotateGrid . map gravityColumn . rotateGrid
     where 
           gravityColumn :: Line -> Line
           gravityColumn = until (filledAtBottom) falling
           filledAtBottom :: Line -> Bool
-          filledAtBottom = not . any (isNothing) . snd . break (isNothing)
+          filledAtBottom = anyNull . break isNothing
           falling :: Line -> Line
           falling (x:Nothing:ys) = Nothing:falling (x:ys)
           falling (x:y:ys) = x:falling (y:ys)
           falling ys = ys
+          anyNull (f, s) = null f || null s
