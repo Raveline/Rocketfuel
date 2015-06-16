@@ -1,19 +1,25 @@
 module Rocketfuel.Grid (
     Cell (..), 
     Effect(..),
+    Swap(..),
     Grid,
     Line,
     generateRandomGrid,
     afterMove
 ) where
 
+import Data.Array
 import Data.List
 import Data.Maybe
 import Control.Monad.Writer
 import Control.Monad.Random
 
+
 data Effect = Effect { _type :: Cell,
                        _size :: Int }
+
+type Position = (Int, Int)
+data Swap = Swap Position Position
 
 data Cell
     = Fuel
@@ -132,3 +138,20 @@ afterMove = afterMove' []
                             (g', []) -> return (g', eff)
                             (g', e) -> do afterGravity <- gravityLoop g'
                                           afterMove' (eff ++ e) afterGravity
+
+-- | Applying a swap means :
+-- 1°) Transform the grid into a single array to allow for easier
+-- manipulation
+-- 2°) Swap the position in the single array
+-- 3°) Transform the array back into a list
+applySwap :: Swap -> Grid -> Grid
+applySwap (Swap p1 p2) g = [(oneIdx, twoValue), (twoIdx, oneValue)] // toArray
+    where
+        toArray :: Grid -> Array Int Cell
+        toArray g = listArray (0, 63) . concat . map catMaybes $ g
+        idx2Dto1D :: Position -> Int
+        idx2Dto1D (x, y) = y*8 + x
+        oneIdx = (idx2Dto1D p1)
+        twoIdx = (idx2Dto1D p2)
+        oneValue = toArray ! oneIdx
+        twoValue = toArray ! twoIdx
