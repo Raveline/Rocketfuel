@@ -10,6 +10,7 @@ module Rocketfuel.Grid (
 
 import Data.Array
 import Data.List
+import Data.List.Split (splitEvery)
 import Data.Maybe
 import Control.Monad.Writer
 import Control.Monad.Random
@@ -145,13 +146,14 @@ afterMove = afterMove' []
 -- 2°) Swap the position in the single array
 -- 3°) Transform the array back into a list
 applySwap :: Swap -> Grid -> Grid
-applySwap (Swap p1 p2) g = [(oneIdx, twoValue), (twoIdx, oneValue)] // toArray
+applySwap (Swap p1 p2) g = rebuild . elems $ toArray // [(oneIdx, twoValue), (twoIdx, oneValue)]
     where
-        toArray :: Grid -> Array Int Cell
-        toArray g = listArray (0, 63) . concat . map catMaybes $ g
+        toArray :: Array Int Cell
+        toArray = listArray (0, 63) . concat . map catMaybes $ g
         idx2Dto1D :: Position -> Int
         idx2Dto1D (x, y) = y*8 + x
         oneIdx = (idx2Dto1D p1)
         twoIdx = (idx2Dto1D p2)
         oneValue = toArray ! oneIdx
         twoValue = toArray ! twoIdx
+        rebuild = map (map Just) . splitEvery 8
