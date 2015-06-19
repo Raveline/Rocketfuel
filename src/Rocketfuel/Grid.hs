@@ -5,12 +5,13 @@ module Rocketfuel.Grid (
     Grid,
     Line,
     generateRandomGrid,
-    afterMove
+    afterMove,
+    applySwap
 ) where
 
 import Data.Array
 import Data.List
-import Data.List.Split (splitEvery)
+import Data.List.Split (chunksOf)
 import Data.Maybe
 import Control.Monad.Writer
 import Control.Monad.Random
@@ -18,6 +19,7 @@ import Control.Monad.Random
 
 data Effect = Effect { _type :: Cell,
                        _size :: Int }
+    deriving(Show)
 
 type Position = (Int, Int)
 data Swap = Swap Position Position
@@ -119,7 +121,12 @@ prependGrid ls = do newLine <- generateRandomLine
                     return $ newLine:ls
 
 containsEmptyCells :: Grid -> Bool
-containsEmptyCells = all (any isNothing)
+-- |Check if a grill contains any empty cell.
+-- >>> containsEmptyCells [[Just Fuel, Just Fuel], [Nothing, Just Shoot]]
+-- True
+-- >>> containsEmptyCells [[Just Fuel, Just Fuel], [Just Shoot, Just Shoot]]
+-- False
+containsEmptyCells = any isNothing . concat
 
 -- | Call gravity till there is no empty cell left in the grid
 gravityLoop :: (MonadRandom r) => Grid -> r Grid
@@ -145,15 +152,16 @@ afterMove = afterMove' []
 -- manipulation
 -- 2°) Swap the position in the single array
 -- 3°) Transform the array back into a list
+--
 applySwap :: Swap -> Grid -> Grid
 applySwap (Swap p1 p2) g = rebuild . elems $ toArray // [(oneIdx, twoValue), (twoIdx, oneValue)]
     where
         toArray :: Array Int Cell
-        toArray = listArray (0, 63) . concat . map catMaybes $ g
+        toArray = listArray (0, 63) . concatMap catMaybes $ g
         idx2Dto1D :: Position -> Int
         idx2Dto1D (x, y) = y*8 + x
-        oneIdx = (idx2Dto1D p1)
-        twoIdx = (idx2Dto1D p2)
+        oneIdx = idx2Dto1D p1
+        twoIdx = idx2Dto1D p2
         oneValue = toArray ! oneIdx
         twoValue = toArray ! twoIdx
-        rebuild = map (map Just) . splitEvery 8
+        rebuild = map (map Just) . chunksOf 8
