@@ -1,15 +1,22 @@
 import Rocketfuel.Grid (Grid, Cell(..), generateRandomGrid,
                         Swap(..), applySwap, afterMove)
 import Data.Char
+import Rocketfuel.Display
 
-main :: IO ()
+main :: IO()
 main = do g <- generateRandomGrid
-          displayGrid g
-          loop g
+          r <- loadResources
+          gc <- return $ GameContext r g
+          loop gc
 
-loop :: Grid -> IO ()
-loop g = do input <- getLine
-            if input == "quit" || input == "exit"
+gridTest :: IO ()
+gridTest = do g <- generateRandomGrid
+              displayGrid g
+              loop' g
+
+loop' :: Grid -> IO ()
+loop' g = do input <- getLine
+             if input == "quit" || input == "exit"
                 then return ()
                 else processSwap input g
 
@@ -19,10 +26,10 @@ processSwap s g = case sToSwap s of
                                   (g'', effs) <- afterMove g'
                                   mapM_ (putStrLn . show) effs
                                   displayGrid g''
-                                  loop g''
+                                  loop' g''
                     Nothing -> do putStrLn "Cannot parse !"
                                   displayGrid g
-                                  loop g
+                                  loop' g
 
 sToSwap :: String -> Maybe Swap
 sToSwap s = do one' <- toPos one

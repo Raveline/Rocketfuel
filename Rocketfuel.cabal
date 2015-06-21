@@ -24,6 +24,8 @@ executable Rocketfuel
                        mtl,
                        MonadRandom,
                        split,
-                       array
+                       array,
+                       gloss,
+                       gloss-juicy
   -- hs-source-dirs:      
   default-language:    Haskell2010
