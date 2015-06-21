@@ -38,7 +38,7 @@ loadResources = do res <- mapM loadJuicyPNG resources
                         else return $ catMaybes res
 
 displayContext :: Display
-displayContext = InWindow "Rocketfuel" (0,0) (480,640)
+displayContext = InWindow "Rocketfuel" (640, 480) (10, 10)
 
 loop :: GameContext -> IO ()
 loop game = play displayContext black 60 game displayGrid eventHandling stepHandling
@@ -54,8 +54,8 @@ pictureLine :: [Picture] -> (Integer, [(Integer, Maybe Cell)]) -> [Maybe Picture
 pictureLine res (y, xx) = map (uncurry (pictureCell res y)) xx
 
 pictureCell :: [Picture] -> Integer -> Integer -> Maybe Cell -> Maybe Picture
-pictureCell res y x (Just c) = Just $ translate (fromIntegral y * 16.0) 
-                                                (fromIntegral x * 16.0)
+pictureCell res y x (Just c) = Just $ translate (fromIntegral y * 32.0) 
+                                                (fromIntegral x * 32.0)
                                                 (cellToResources res c)
 pictureCell _ _ _ Nothing = Nothing
 
