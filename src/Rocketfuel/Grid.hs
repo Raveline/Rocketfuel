@@ -2,6 +2,7 @@ module Rocketfuel.Grid (
     Cell (..), 
     Effect(..),
     Swap(..),
+    Position,
     Grid,
     Line,
     generateRandomGrid,
@@ -21,7 +22,7 @@ data Effect = Effect { _type :: Cell,
                        _size :: Int }
     deriving(Show)
 
-type Position = (Int, Int)
+type Position = (Integer, Integer)
 data Swap = Swap Position Position
 
 data Cell
@@ -156,9 +157,9 @@ afterMove = afterMove' []
 applySwap :: Swap -> Grid -> Grid
 applySwap (Swap p1 p2) g = rebuild . elems $ toArray // [(oneIdx, twoValue), (twoIdx, oneValue)]
     where
-        toArray :: Array Int Cell
+        toArray :: Array Integer Cell
         toArray = listArray (0, 63) . concatMap catMaybes $ g
-        idx2Dto1D :: Position -> Int
+        idx2Dto1D :: Position -> Integer
         idx2Dto1D (x, y) = y*8 + x
         oneIdx = idx2Dto1D p1
         twoIdx = idx2Dto1D p2
