@@ -1,10 +1,4 @@
 module Rocketfuel.Grid (
-    Cell (..), 
-    Effect(..),
-    Swap(..),
-    Position,
-    Grid,
-    Line,
     generateRandomGrid,
     afterMove,
     applySwap
@@ -17,21 +11,8 @@ import Data.Maybe
 import Control.Monad.Writer
 import Control.Monad.Random
 
+import Rocketfuel.Types
 
-data Effect = Effect { _type :: Cell,
-                       _size :: Int }
-    deriving(Show)
-
-type Position = (Integer, Integer)
-data Swap = Swap Position Position
-
-data Cell
-    = Fuel
-    | Repair
-    | Trade
-    | Shoot
-    | Navigate
-    deriving (Eq, Show, Enum, Bounded)
 
 -- These lines allow us to run random and randomR on an enum
 getRandomR' :: (MonadRandom m, Enum a, Bounded a) => (a,a) -> m a
@@ -45,9 +26,6 @@ generateRandomLine = replicateM 8 (liftM Just generateRandomCell)
 
 generateRandomGrid :: (MonadRandom r) => r Grid
 generateRandomGrid = replicateM 8 generateRandomLine
-
-type Grid = [Line]
-type Line = [Maybe Cell]
 
 emptyAndLogIfAboveThree :: Line -> Writer [Effect] Line
 emptyAndLogIfAboveThree line

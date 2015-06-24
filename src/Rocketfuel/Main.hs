@@ -1,7 +1,7 @@
-import Rocketfuel.Grid (Grid, Cell(..), generateRandomGrid,
-                        Swap(..), applySwap, afterMove)
+import Rocketfuel.Grid
 import Data.Char
 import Rocketfuel.Display
+import Rocketfuel.DisplayTypes
 
 main :: IO()
 main = do g <- generateRandomGrid
