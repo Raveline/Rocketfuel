@@ -16,16 +16,16 @@ import Rocketfuel.Grid
 dragIfNeeded :: Float -> Float -> GameContext -> GameContext
 dragIfNeeded x y g@(GameContext _ _ Nothing)
     = if uncurry legit coords
-            then g { dragDropState = Just coords }
+            then g { command = Just $ DragAndDrop (Just coords) Nothing }
             else g
     where coords = cellFromCoord x y
 modifyIfNeeded _ _ g = g
 
 dropIfNeeded :: Float -> Float -> GameContext -> GameContext
-dropIfNeeded x y g@(GameContext _ grid (Just p)) = if uncurry legit coords
-                                                    then g { dragDropState = Nothing,
-                                                             grid = applySwap (Swap p coords) grid }
-                                                    else g { dragDropState = Nothing }
+dropIfNeeded x y g@(GameContext _ grid (Just (DragAndDrop (Just p) Nothing)))
+    = if uncurry legit coords
+        then execute $ g { command = Just $ DragAndDrop (Just p) (Just coords) }
+        else g { command = Just $ DragAndDrop Nothing Nothing }
     where coords = cellFromCoord x y
 dropIfNeeded _ _ g = g
 
