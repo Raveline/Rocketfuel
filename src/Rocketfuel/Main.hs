@@ -4,7 +4,9 @@ import Rocketfuel.Display
 import Rocketfuel.DisplayTypes
 
 main :: IO()
-main = do g <- generateRandomGrid
+main = do let width = 640
+              height = 480
+          g <- generateRandomGrid
           r <- loadResources
           gc <- return $ GameContext r g Nothing
-          loop gc
+          withWindow width height "Rocketfuel" $ \loop gc

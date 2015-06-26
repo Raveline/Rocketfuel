@@ -42,8 +42,14 @@ loadResources = do res <- mapM loadJuicyPNG resources
 displayContext :: Display
 displayContext = InWindow "Rocketfuel" (640, 480) (10, 10)
 
-loop :: GameContext -> IO ()
-loop game = play displayContext black 60 game displayGrid eventHandling stepHandling
+loop :: (Int, Int) -> GameContext -> IO ()
+loop w game = do pollEvents
+                 displayContext game
+                 threadDelay 20000
+                 k <- keyIsPressed window Key'Escape
+                 if k
+                    then return ()
+                    else loop w game
 
 -- | Take a list of list, and index it so that we can use those
 -- as index of line and columns.
@@ -66,6 +72,14 @@ pictureCell res y x (Just c) = Just $ translate (fromIntegral x * 32.0)
                                                 (fromIntegral y * (-32.0))
                                                 (cellToResources res c)
 pictureCell _ _ _ Nothing = Nothing
+
+keyIsPressed :: Window -> Key -> IO Bool
+keyIsPressed win key = isPress `fmap` GLFW.getKey win key
+
+isPress :: KeyState -> Bool
+isPress KeyState'Pressed = True
+isPress KeyState'Repeating = True
+isPress _ = False
 
 eventHandling :: Event -> GameContext -> GameContext
 eventHandling (EventKey (MouseButton _) Down _ (x, y)) g = dragIfNeeded x y g
