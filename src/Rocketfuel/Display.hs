@@ -1,15 +1,19 @@
+{-# LANGUAGE PackageImports #-}
 module Rocketfuel.Display (
     loop,
     GameContext(..),
-    loadResources
+    buildContext
 ) where 
 
 import Data.Maybe
+import Control.Monad (unless)
 
-import Debug.Trace
-import Graphics.Gloss
+import "GLFW-b" Graphics.UI.GLFW as GLFW
+import Control.Concurrent (threadDelay)
+import Graphics.Gloss.Data.Picture
+import Graphics.Gloss.Data.Color
+import Graphics.Gloss.Rendering
 import Graphics.Gloss.Juicy
-import Graphics.Gloss.Interface.Pure.Game
 
 import Rocketfuel.Grid
 import Rocketfuel.Input
@@ -33,23 +37,29 @@ cellToResources res Repair = res !! 2
 cellToResources res Shoot = res !! 3
 cellToResources res Trade = res !! 4
 
+buildContext :: IO GameContext
+buildContext = do g <- generateRandomGrid
+                  rs <- loadResources
+                  return $ GameContext rs g Nothing
+
 loadResources :: IO [Picture]
 loadResources = do res <- mapM loadJuicyPNG resources
                    if any isNothing res
-                        then error "Missing resources"
-                        else return $ catMaybes res
+                    then error "Missing resources"
+                    else return $ catMaybes res
 
-displayContext :: Display
-displayContext = InWindow "Rocketfuel" (640, 480) (10, 10)
+-- displayContext :: GameContext -> Display
+displayContext (w, h) st gc = 
+    displayPicture (w,h) white st 1.0 $ displayGrid gc
 
-loop :: (Int, Int) -> GameContext -> IO ()
-loop w game = do pollEvents
-                 displayContext game
-                 threadDelay 20000
-                 k <- keyIsPressed window Key'Escape
-                 if k
-                    then return ()
-                    else loop w game
+-- loop :: (Int, Int) -> GameContext -> IO ()
+loop size window st game = do 
+    pollEvents
+    displayContext size st game
+    swapBuffers window
+    threadDelay 20000
+    k <- keyIsPressed window Key'Escape
+    unless k $ loop size window st game
 
 -- | Take a list of list, and index it so that we can use those
 -- as index of line and columns.
@@ -80,11 +90,3 @@ isPress :: KeyState -> Bool
 isPress KeyState'Pressed = True
 isPress KeyState'Repeating = True
 isPress _ = False
-
-eventHandling :: Event -> GameContext -> GameContext
-eventHandling (EventKey (MouseButton _) Down _ (x, y)) g = dragIfNeeded x y g
-eventHandling (EventKey (MouseButton _) Up _ (x, y)) g = dropIfNeeded x y g
-eventHandling _ g = g
-
-stepHandling :: Float -> GameContext -> GameContext
-stepHandling _ g = g
