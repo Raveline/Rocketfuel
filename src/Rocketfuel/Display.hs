@@ -13,6 +13,7 @@ import Control.Concurrent (threadDelay)
 import Graphics.Gloss.Data.Picture
 import Graphics.Gloss.Data.Color
 import Graphics.Gloss.Rendering
+import Graphics.Gloss.Data.ViewPort
 import Graphics.Gloss.Juicy
 
 import Rocketfuel.Grid
@@ -20,6 +21,7 @@ import Rocketfuel.Input
 import Rocketfuel.Types
 import Rocketfuel.DisplayTypes
 
+ortho0_0vp = ViewPort (-384, 284) 0 1
 
 resources :: [String]
 resources = ["img/fuel.png",
@@ -50,12 +52,13 @@ loadResources = do res <- mapM loadJuicyPNG resources
 
 -- displayContext :: GameContext -> Display
 displayContext (w, h) st gc = 
-    displayPicture (w,h) white st 1.0 $ displayGrid gc
+    displayPicture (w,h) white st (viewPortScale ortho0_0vp) $ uncurry translate (viewPortTranslate ortho0_0vp) (displayGrid gc)
 
 -- loop :: (Int, Int) -> GameContext -> IO ()
 loop size window st game = do 
     pollEvents
     displayContext size st game
+    (mx, my) <- getCursorPos window
     swapBuffers window
     threadDelay 20000
     k <- keyIsPressed window Key'Escape
@@ -82,11 +85,3 @@ pictureCell res y x (Just c) = Just $ translate (fromIntegral x * 32.0)
                                                 (fromIntegral y * (-32.0))
                                                 (cellToResources res c)
 pictureCell _ _ _ Nothing = Nothing
-
-keyIsPressed :: Window -> Key -> IO Bool
-keyIsPressed win key = isPress `fmap` GLFW.getKey win key
-
-isPress :: KeyState -> Bool
-isPress KeyState'Pressed = True
-isPress KeyState'Repeating = True
-isPress _ = False
