@@ -1,19 +1,41 @@
+{-# LANGUAGE PackageImports #-}
 module Rocketfuel.Input (
+    keyIsPressed,
     dragIfNeeded,
     dropIfNeeded
 ) where
 
-import Debug.Trace
+import "GLFW-b" Graphics.UI.GLFW as GLFW
+import Control.Monad
+
 import Rocketfuel.Types
 import Rocketfuel.DisplayTypes
 import Rocketfuel.Grid
+
+data Click = Click { _x :: Double,
+                     _y :: Double }
+
+-- GLFW input handling
+
+checkMouseButtonStatus :: Window -> MouseButtonState -> IO Bool
+checkMouseButtonStatus win st = liftM (st ==) (getMouseButton win MouseButton'1)
+
+keyIsPressed :: Window -> Key -> IO Bool
+keyIsPressed win key = isPress `fmap` GLFW.getKey win key
+
+isPress :: KeyState -> Bool
+isPress KeyState'Pressed = True
+isPress KeyState'Repeating = True
+isPress _ = False
+
+-- Logic for drag'n'drop
 
 -- Called when the mouse is down.
 -- If there is no given tile being dragged,
 -- given a mouse input expressed in x and y,
 -- check if it fits in the grid; if so, start
 -- dragging this tile by modifying GameContext.
-dragIfNeeded :: Float -> Float -> GameContext -> GameContext
+dragIfNeeded :: Double -> Double -> GameContext -> GameContext
 dragIfNeeded x y g@(GameContext _ _ Nothing)
     = if uncurry legit coords
             then g { command = Just $ DragAndDrop (Just coords) Nothing }
@@ -21,7 +43,7 @@ dragIfNeeded x y g@(GameContext _ _ Nothing)
     where coords = cellFromCoord x y
 modifyIfNeeded _ _ g = g
 
-dropIfNeeded :: Float -> Float -> GameContext -> GameContext
+dropIfNeeded :: Double -> Double -> GameContext -> GameContext
 dropIfNeeded x y g@(GameContext _ grid (Just (DragAndDrop (Just p) Nothing)))
     = if uncurry legit coords
         then execute $ g { command = Just $ DragAndDrop (Just p) (Just coords) }
@@ -34,7 +56,7 @@ legit x y = x < 8 && x >= 0 && y < 8 && y >= 0
 
 -- Given a global mouse input expressed in gloss viewport,
 -- convert it to a 0,0 coord system on the grid.
-cellFromCoord :: Float -> Float -> (Integer, Integer)
+cellFromCoord :: Double -> Double -> (Integer, Integer)
 cellFromCoord x y = (round (globalX / 32.0), abs $ round (globalY / 32.0))
     where globalX = x
           globalY = y
