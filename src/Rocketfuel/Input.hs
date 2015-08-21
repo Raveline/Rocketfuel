@@ -12,10 +12,16 @@ import Rocketfuel.Types
 import Rocketfuel.DisplayTypes
 import Rocketfuel.Grid
 
-data Click = Click { _x :: Double,
-                     _y :: Double }
+data MouseStatus = Clicked | Released
+data Click = Click { _xy :: (Double, Double),
+                     _status :: MouseStatus }
 
--- GLFW input handling
+readMouse window sink = do
+    pollEvents
+    mousePos <- getCursorPos window
+    mouseIsPressed <- checkMouseButtonStatus window MouseButtonState'Pressed
+    if mouseIsPressed then sink $ Click mousePos Clicked
+                      else sink $ Click mousePos Released
 
 checkMouseButtonStatus :: Window -> MouseButtonState -> IO Bool
 checkMouseButtonStatus win st = liftM (st ==) (getMouseButton win MouseButton'1)

@@ -1,12 +1,10 @@
 {-# LANGUAGE PackageImports #-}
 module Rocketfuel.Display (
-    loop,
     GameContext(..),
     buildContext
 ) where 
 
 import Data.Maybe
-import Control.Monad (unless)
 
 import "GLFW-b" Graphics.UI.GLFW as GLFW
 import Control.Concurrent (threadDelay)
@@ -50,19 +48,12 @@ loadResources = do res <- mapM loadJuicyPNG resources
                     then error "Missing resources"
                     else return $ catMaybes res
 
--- displayContext :: GameContext -> Display
-displayContext (w, h) st gc = 
-    displayPicture (w,h) white st (viewPortScale ortho0_0vp) $ uncurry translate (viewPortTranslate ortho0_0vp) (displayGrid gc)
-
--- loop :: (Int, Int) -> GameContext -> IO ()
-loop size window st game = do 
-    pollEvents
-    displayContext size st game
-    (mx, my) <- getCursorPos window
+-- displayContext :: Window -> (Int, Int) -> GlossState -> GameContext -> IO ()
+displayContext window (w, h) st gc = do
+    displayPicture (w,h) white st (viewPortScale ortho0_0vp) 
+        $ uncurry translate (viewPortTranslate ortho0_0vp) (displayGrid gc)
     swapBuffers window
-    threadDelay 20000
-    k <- keyIsPressed window Key'Escape
-    unless k $ loop size window st game
+
 
 -- | Take a list of list, and index it so that we can use those
 -- as index of line and columns.
