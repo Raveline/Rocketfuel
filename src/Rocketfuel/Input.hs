@@ -1,11 +1,10 @@
 {-# LANGUAGE PackageImports #-}
 module Rocketfuel.Input (
     keyIsPressed,
-    dragIfNeeded,
-    dropIfNeeded,
     readMouse,
     Click (..),
-    MouseStatus (..)
+    MouseStatus (..),
+    updateContext
 ) where
 
 import "GLFW-b" Graphics.UI.GLFW as GLFW
@@ -17,6 +16,14 @@ data MouseStatus = Clicked | Released
 data Click = Click { _xy :: (Double, Double),
                      _status :: MouseStatus }
 
+-- Main updater
+
+updateContext :: Click -> GameContext -> GameContext
+updateContext (Click (x,y) Clicked) gc = dragIfNeeded x y gc
+updateContext (Click (x,y) Released) gc = dropIfNeeded x y gc
+
+-- Signal input management
+--
 readMouse :: Window -> (Click -> IO b) -> IO b
 readMouse window sink = do
     pollEvents
@@ -49,10 +56,10 @@ dragIfNeeded x y g@(GameContext _ _ Nothing)
             then g { command = Just $ DragAndDrop (Just coords) Nothing }
             else g
     where coords = cellFromCoord x y
-modifyIfNeeded _ _ g = g
+dragIfNeeded _ _ g = g
 
 dropIfNeeded :: Double -> Double -> GameContext -> GameContext
-dropIfNeeded x y g@(GameContext _ grid (Just (DragAndDrop (Just p) Nothing)))
+dropIfNeeded x y g@(GameContext _ _ (Just (DragAndDrop (Just p) Nothing)))
     = if uncurry legit coords
         then execute $ g { command = Just $ DragAndDrop (Just p) (Just coords) }
         else g { command = Just $ DragAndDrop Nothing Nothing }
