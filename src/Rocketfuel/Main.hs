@@ -34,8 +34,6 @@ main = do let width = 800
                 quit <- keyIsPressed window Key'Escape
                 unless quit loop
 
-updateContext :: Click -> GameContext -> GameContext
-updateContext = undefined
 
 -- Utility function to get a window
 withWindow :: Int -> Int -> String -> (GLFW.Window -> IO ()) -> IO ()
