@@ -1,30 +1,34 @@
 {-# LANGUAGE PackageImports #-}
-import Rocketfuel.Grid
-import Data.Char
-import Control.Monad (unless)
-import Rocketfuel.Display
-import Rocketfuel.Input
-import Rocketfuel.DisplayTypes
-import Graphics.Gloss.Rendering
+import Control.Monad (unless, join, when)
+import Control.Monad.Fix
+import Control.Concurrent (threadDelay)
+
 import "GLFW-b" Graphics.UI.GLFW as GLFW
 import qualified Graphics.UI.GLUT as GLUT
+import Graphics.Gloss.Rendering
+import FRP.Elerea.Simple
+
+import Rocketfuel.Display
+import Rocketfuel.Input
+
 
 main :: IO()
 main = do let width = 800
               height = 600
-              mouseState = Click (0.0, 0.0) Nothing
+              mouseState = Click (0.0, 0.0) Released
           -- Initialize GLUT, Elerea and GlossState
           (_,_) <- GLUT.getArgsAndInitialize
           (mouse, mouseSink) <- external mouseState
           glossState <- initState
+          baseContext <- buildContext
           -- Get a window and loop
           withWindow width height "Rocketfuel" $ \window -> do
             -- Prepare the FRP network
             network <- start $ do
-                gameContext <- transfer buildContext updateContext
-                return $ displayContext window (width, height) glossState gameContext
+                gameContext <- transfer baseContext updateContext mouse
+                return $ displayContext window (width, height) glossState <$> gameContext
             fix $ \loop -> do
-                readMouse mouseState win mouseSink
+                readMouse window mouseSink
                 join network
                 threadDelay 20000
                 quit <- keyIsPressed window Key'Escape

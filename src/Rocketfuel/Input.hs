@@ -2,20 +2,22 @@
 module Rocketfuel.Input (
     keyIsPressed,
     dragIfNeeded,
-    dropIfNeeded
+    dropIfNeeded,
+    readMouse,
+    Click (..),
+    MouseStatus (..)
 ) where
 
 import "GLFW-b" Graphics.UI.GLFW as GLFW
 import Control.Monad
 
-import Rocketfuel.Types
 import Rocketfuel.DisplayTypes
-import Rocketfuel.Grid
 
 data MouseStatus = Clicked | Released
 data Click = Click { _xy :: (Double, Double),
                      _status :: MouseStatus }
 
+readMouse :: Window -> (Click -> IO b) -> IO b
 readMouse window sink = do
     pollEvents
     mousePos <- getCursorPos window
@@ -58,6 +60,7 @@ dropIfNeeded x y g@(GameContext _ grid (Just (DragAndDrop (Just p) Nothing)))
 dropIfNeeded _ _ g = g
 
 -- Given a x, y index, check it can be a position on the grid.
+legit :: (Num a, Ord a) => a -> a -> Bool
 legit x y = x < 8 && x >= 0 && y < 8 && y >= 0
 
 -- Given a global mouse input expressed in gloss viewport,

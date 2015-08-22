@@ -1,13 +1,13 @@
 {-# LANGUAGE PackageImports #-}
 module Rocketfuel.Display (
     GameContext(..),
-    buildContext
+    buildContext,
+    displayContext
 ) where 
 
 import Data.Maybe
 
 import "GLFW-b" Graphics.UI.GLFW as GLFW
-import Control.Concurrent (threadDelay)
 import Graphics.Gloss.Data.Picture
 import Graphics.Gloss.Data.Color
 import Graphics.Gloss.Rendering
@@ -15,10 +15,10 @@ import Graphics.Gloss.Data.ViewPort
 import Graphics.Gloss.Juicy
 
 import Rocketfuel.Grid
-import Rocketfuel.Input
 import Rocketfuel.Types
 import Rocketfuel.DisplayTypes
 
+ortho0_0vp :: ViewPort
 ortho0_0vp = ViewPort (-384, 284) 0 1
 
 resources :: [String]
@@ -48,7 +48,7 @@ loadResources = do res <- mapM loadJuicyPNG resources
                     then error "Missing resources"
                     else return $ catMaybes res
 
--- displayContext :: Window -> (Int, Int) -> GlossState -> GameContext -> IO ()
+displayContext :: Window -> (Int, Int) -> State -> GameContext -> IO ()
 displayContext window (w, h) st gc = do
     displayPicture (w,h) white st (viewPortScale ortho0_0vp) 
         $ uncurry translate (viewPortTranslate ortho0_0vp) (displayGrid gc)
