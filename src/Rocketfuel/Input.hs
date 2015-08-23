@@ -12,6 +12,7 @@ import Control.Monad
 
 import Rocketfuel.DisplayTypes
 
+type Coords = (Integer, Integer)
 data MouseStatus = Clicked | Released
 data Click = Click { _xy :: (Double, Double),
                      _status :: MouseStatus }
@@ -19,8 +20,14 @@ data Click = Click { _xy :: (Double, Double),
 -- Main updater
 
 updateContext :: Click -> GameContext -> GameContext
-updateContext (Click (x,y) Clicked) gc = dragIfNeeded x y gc
-updateContext (Click (x,y) Released) gc = dropIfNeeded x y gc
+updateContext (Click (x, y) status) gc = 
+    if legit coords then updateContext' status
+                    else gc
+    where 
+        coords = cellFromCoord x y
+        updateContext' :: MouseStatus -> GameContext
+        updateContext' Clicked = dragIfNeeded coords gc
+        updateContext' Released = dropIfNeeded coords gc
 
 -- Signal input management
 --
@@ -50,29 +57,23 @@ isPress _ = False
 -- given a mouse input expressed in x and y,
 -- check if it fits in the grid; if so, start
 -- dragging this tile by modifying GameContext.
-dragIfNeeded :: Double -> Double -> GameContext -> GameContext
-dragIfNeeded x y g@(GameContext _ _ Nothing)
-    = if uncurry legit coords
-            then g { command = Just $ DragAndDrop (Just coords) Nothing }
-            else g
-    where coords = cellFromCoord x y
-dragIfNeeded _ _ g = g
+dragIfNeeded :: Coords -> GameContext -> GameContext
+dragIfNeeded coords g@(GameContext _ _ Nothing)
+    = g { command = Just $ DragAndDrop (Just coords) Nothing }
+dragIfNeeded _ g = g
 
-dropIfNeeded :: Double -> Double -> GameContext -> GameContext
-dropIfNeeded x y g@(GameContext _ _ (Just (DragAndDrop (Just p) Nothing)))
-    = if uncurry legit coords
-        then execute $ g { command = Just $ DragAndDrop (Just p) (Just coords) }
-        else g { command = Just $ DragAndDrop Nothing Nothing }
-    where coords = cellFromCoord x y
-dropIfNeeded _ _ g = g
+dropIfNeeded :: Coords -> GameContext -> GameContext
+dropIfNeeded coords g@(GameContext _ _ (Just (DragAndDrop (Just p) Nothing)))
+    = g { command = Just $ DragAndDrop (Just p) (Just coords) }
+dropIfNeeded _ g = g
 
 -- Given a x, y index, check it can be a position on the grid.
-legit :: (Num a, Ord a) => a -> a -> Bool
-legit x y = x < 8 && x >= 0 && y < 8 && y >= 0
+legit :: (Num a, Ord a) => (a, a) -> Bool
+legit (x, y) = x < 8 && x >= 0 && y < 8 && y >= 0
 
 -- Given a global mouse input expressed in gloss viewport,
 -- convert it to a 0,0 coord system on the grid.
-cellFromCoord :: Double -> Double -> (Integer, Integer)
+cellFromCoord :: Double -> Double -> Coords
 cellFromCoord x y = (round (globalX / 32.0), abs $ round (globalY / 32.0))
     where globalX = x
           globalY = y
