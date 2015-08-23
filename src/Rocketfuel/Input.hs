@@ -74,6 +74,4 @@ legit (x, y) = x < 8 && x >= 0 && y < 8 && y >= 0
 -- Given a global mouse input expressed in gloss viewport,
 -- convert it to a 0,0 coord system on the grid.
 cellFromCoord :: Double -> Double -> Coords
-cellFromCoord x y = (round (globalX / 32.0), abs $ round (globalY / 32.0))
-    where globalX = x
-          globalY = y
+cellFromCoord x y = (floor (x / 32.0), abs $ floor (y / 32.0))
