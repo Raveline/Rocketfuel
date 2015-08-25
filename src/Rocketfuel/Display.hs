@@ -18,7 +18,6 @@ import Graphics.Gloss.Juicy
 
 import Rocketfuel.Grid
 import Rocketfuel.Types
-import Rocketfuel.DisplayTypes
 
 ortho0_0vp :: ViewPort
 ortho0_0vp = ViewPort (-384, 284) 0 1

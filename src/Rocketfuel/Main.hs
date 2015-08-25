@@ -9,6 +9,7 @@ import Graphics.Gloss.Rendering
 import FRP.Elerea.Simple
 
 import Rocketfuel.Display
+import Rocketfuel.Commands
 import Rocketfuel.Input
 
 

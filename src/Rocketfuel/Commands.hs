@@ -1,18 +1,9 @@
-module Rocketfuel.DisplayTypes (
-    Command (..),
-    GameContext(..),
+module Rocketfuel.Commands (
     execute
 ) where
 
-import Graphics.Gloss
-
 import Rocketfuel.Types
 import Rocketfuel.Grid
-
-data GameContext = GameContext { grid :: Grid,
-                                 command :: Maybe Command }
-
-data Command = DragAndDrop (Maybe Position) (Maybe Position)
 
 execute :: GameContext -> GameContext
 execute = removeCommand . execute'

@@ -9,8 +9,7 @@ module Rocketfuel.Input (
 
 import "GLFW-b" Graphics.UI.GLFW as GLFW
 import Control.Monad
-
-import Rocketfuel.DisplayTypes
+import Rocketfuel.Types
 
 type Coords = (Integer, Integer)
 data MouseStatus = Clicked | Released

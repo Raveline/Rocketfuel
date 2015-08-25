@@ -5,6 +5,8 @@ module Rocketfuel.Types (
     Cell (..), 
     Effect(..),
     Swap(..),
+    GameContext(..),
+    Command (..)
 ) where
 
 data Cell
@@ -24,3 +26,8 @@ data Effect = Effect { _type :: Cell,
 
 type Grid = [Line]
 type Line = [Maybe Cell]
+
+data GameContext = GameContext { grid :: Grid,
+                                 command :: Maybe Command }
+
+data Command = DragAndDrop (Maybe Position) (Maybe Position)
