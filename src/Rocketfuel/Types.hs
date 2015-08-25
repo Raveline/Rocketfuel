@@ -13,7 +13,7 @@ data Cell
     | Trade
     | Shoot
     | Navigate
-    deriving (Eq, Show, Enum, Bounded)
+    deriving (Eq, Ord, Show, Enum, Bounded)
 
 type Position = (Integer, Integer)
 data Swap = Swap Position Position

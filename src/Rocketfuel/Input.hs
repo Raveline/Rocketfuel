@@ -22,12 +22,14 @@ data Click = Click { _xy :: (Double, Double),
 updateContext :: Click -> GameContext -> GameContext
 updateContext (Click (x, y) status) gc = 
     if legit coords then updateContext' status
-                    else gc
+                    else undragIfNeeded status
     where 
         coords = cellFromCoord x y
         updateContext' :: MouseStatus -> GameContext
         updateContext' Clicked = dragIfNeeded coords gc
         updateContext' Released = dropIfNeeded coords gc
+        undragIfNeeded Released = gc { command = Nothing }
+        undragIfNeeded Clicked = gc
 
 -- Signal input management
 --
@@ -58,12 +60,12 @@ isPress _ = False
 -- check if it fits in the grid; if so, start
 -- dragging this tile by modifying GameContext.
 dragIfNeeded :: Coords -> GameContext -> GameContext
-dragIfNeeded coords g@(GameContext _ _ Nothing)
+dragIfNeeded coords g@(GameContext _ Nothing)
     = g { command = Just $ DragAndDrop (Just coords) Nothing }
 dragIfNeeded _ g = g
 
 dropIfNeeded :: Coords -> GameContext -> GameContext
-dropIfNeeded coords g@(GameContext _ _ (Just (DragAndDrop (Just p) Nothing)))
+dropIfNeeded coords g@(GameContext _ (Just (DragAndDrop (Just p) Nothing)))
     = g { command = Just $ DragAndDrop (Just p) (Just coords) }
 dropIfNeeded _ g = g
 

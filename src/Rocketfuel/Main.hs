@@ -20,13 +20,14 @@ main = do let width = 800
           (_,_) <- GLUT.getArgsAndInitialize
           (mouse, mouseSink) <- external mouseState
           glossState <- initState
+          resources <- loadResources
           baseContext <- buildContext
           -- Get a window and loop
           withWindow width height "Rocketfuel" $ \window -> do
             -- Prepare the FRP network
             network <- start $ do
                 gameContext <- transfer baseContext updateContext mouse
-                return $ displayContext window (width, height) glossState <$> gameContext
+                return $ displayContext window (width, height) glossState resources <$> grid `fmap` gameContext
             fix $ \loop -> do
                 readMouse window mouseSink
                 join network

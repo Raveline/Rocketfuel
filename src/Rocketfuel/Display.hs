@@ -2,10 +2,12 @@
 module Rocketfuel.Display (
     GameContext(..),
     buildContext,
-    displayContext
+    displayContext,
+    loadResources
 ) where 
 
 import Data.Maybe
+import qualified Data.Map as M
 
 import "GLFW-b" Graphics.UI.GLFW as GLFW
 import Graphics.Gloss.Data.Picture
@@ -21,37 +23,32 @@ import Rocketfuel.DisplayTypes
 ortho0_0vp :: ViewPort
 ortho0_0vp = ViewPort (-384, 284) 0 1
 
-resources :: [String]
-resources = ["img/fuel.png",
-             "img/navigate.png",
-             "img/repair.png",
-             "img/shoot.png",
-             "img/trade.png"]
+resources :: M.Map Cell FilePath
+resources = M.fromList [(Fuel, "img/fuel.png")
+                       ,(Navigate, "img/navigate.png")
+                       ,(Repair, "img/repair.png")
+                       ,(Shoot, "img/shoot.png")
+                       ,(Trade, "img/trade.png")]
 
--- This is a disgrace, but fortunately a temporary one. 
--- We'll have to consider using at least a map (Cell, Picture).
-cellToResources :: [Picture] -> Cell -> Picture
-cellToResources res Fuel = head res
-cellToResources res Navigate = res !! 1
-cellToResources res Repair = res !! 2
-cellToResources res Shoot = res !! 3
-cellToResources res Trade = res !! 4
+type CellTextures = M.Map Cell Picture
+
+cellToResources :: Cell -> CellTextures -> Picture
+cellToResources = flip (M.!)
 
 buildContext :: IO GameContext
 buildContext = do g <- generateRandomGrid
-                  rs <- loadResources
-                  return $ GameContext rs g Nothing
+                  return $ GameContext g Nothing
 
-loadResources :: IO [Picture]
-loadResources = do res <- mapM loadJuicyPNG resources
+loadResources :: IO CellTextures
+loadResources = do res <- mapM loadJuicyPNG (M.elems resources)
                    if any isNothing res
                     then error "Missing resources"
-                    else return $ catMaybes res
+                    else return $ M.fromList $ zip (M.keys resources) (catMaybes res)
 
-displayContext :: Window -> (Int, Int) -> State -> GameContext -> IO ()
-displayContext window (w, h) st gc = do
+displayContext :: Window -> (Int, Int) -> State -> CellTextures -> Grid -> IO ()
+displayContext window (w, h) st res g = do
     displayPicture (w,h) white st (viewPortScale ortho0_0vp) 
-        $ uncurry translate (viewPortTranslate ortho0_0vp) (displayGrid gc)
+        $ uncurry translate (viewPortTranslate ortho0_0vp) (displayGrid g res)
     swapBuffers window
 
 
@@ -64,15 +61,15 @@ displayContext window (w, h) st gc = do
 idxListOfList :: [[a]] -> [(Integer, [(Integer, a)])]
 idxListOfList = zip [0..] . map (zip [0..])
 
-displayGrid :: GameContext -> Picture
-displayGrid (GameContext res _grid _) 
-    = Pictures . catMaybes . concatMap (pictureLine res) . idxListOfList $ _grid
+displayGrid :: Grid -> CellTextures -> Picture
+displayGrid grid res
+    = Pictures . catMaybes . concatMap (pictureLine res) . idxListOfList $ grid
 
-pictureLine :: [Picture] -> (Integer, [(Integer, Maybe Cell)]) -> [Maybe Picture]
+pictureLine :: CellTextures -> (Integer, [(Integer, Maybe Cell)]) -> [Maybe Picture]
 pictureLine res (y, xx) = map (uncurry (pictureCell res y)) xx
 
-pictureCell :: [Picture] -> Integer -> Integer -> Maybe Cell -> Maybe Picture
+pictureCell :: CellTextures -> Integer -> Integer -> Maybe Cell -> Maybe Picture
 pictureCell res y x (Just c) = Just $ translate (fromIntegral x * 32.0)
                                                 (fromIntegral y * (-32.0))
-                                                (cellToResources res c)
+                                                (cellToResources c res)
 pictureCell _ _ _ Nothing = Nothing
