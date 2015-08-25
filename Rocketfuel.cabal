@@ -25,6 +25,7 @@ executable Rocketfuel
                        MonadRandom,
                        split,
                        array,
+                       containers,
                        gloss,
                        gloss-rendering,
                        gloss-juicy,
