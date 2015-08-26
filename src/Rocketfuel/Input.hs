@@ -4,7 +4,7 @@ module Rocketfuel.Input (
     readMouse,
     Click (..),
     MouseStatus (..),
-    updateContext
+    updateCommand
 ) where
 
 import "GLFW-b" Graphics.UI.GLFW as GLFW
@@ -18,17 +18,23 @@ data Click = Click { _xy :: (Double, Double),
 
 -- Main updater
 
-updateContext :: Click -> GameContext -> GameContext
-updateContext (Click (x, y) status) gc = 
-    if legit coords then updateContext' status
-                    else undragIfNeeded status
+updateCommand :: Click -> Maybe Command -> Maybe Command
+updateCommand click comm = readClick click . cleanCommand $ comm
     where 
-        coords = cellFromCoord x y
-        updateContext' :: MouseStatus -> GameContext
-        updateContext' Clicked = dragIfNeeded coords gc
-        updateContext' Released = dropIfNeeded coords gc
-        undragIfNeeded Released = gc { command = Nothing }
-        undragIfNeeded Clicked = gc
+        cleanCommand :: Maybe Command -> Maybe Command
+        cleanCommand (Just (DragAndDrop (Just x) (Just y))) = Nothing
+        cleanCommand other = other
+        readClick :: Click -> Maybe Command -> Maybe Command
+        readClick (Click (x, y) status) com = 
+            if legit coords then updateCommand' status
+                        else undragIfNeeded status
+            where
+                coords = cellFromCoord x y
+                updateCommand' :: MouseStatus -> Maybe Command
+                updateCommand' Clicked = dragIfNeeded coords com
+                updateCommand' Released = dropIfNeeded coords com
+                undragIfNeeded Released = Nothing
+                undragIfNeeded Clicked = com
 
 -- Signal input management
 --
@@ -58,15 +64,14 @@ isPress _ = False
 -- given a mouse input expressed in x and y,
 -- check if it fits in the grid; if so, start
 -- dragging this tile by modifying GameContext.
-dragIfNeeded :: Coords -> GameContext -> GameContext
-dragIfNeeded coords g@(GameContext _ Nothing)
-    = g { command = Just $ DragAndDrop (Just coords) Nothing }
-dragIfNeeded _ g = g
+dragIfNeeded :: Coords -> Maybe Command -> Maybe Command
+dragIfNeeded coords Nothing = Just $ DragAndDrop (Just coords) Nothing
+dragIfNeeded _ c = c
 
-dropIfNeeded :: Coords -> GameContext -> GameContext
-dropIfNeeded coords g@(GameContext _ (Just (DragAndDrop (Just p) Nothing)))
-    = g { command = Just $ DragAndDrop (Just p) (Just coords) }
-dropIfNeeded _ g = g
+dropIfNeeded :: Coords -> Maybe Command -> Maybe Command
+dropIfNeeded coords (Just (DragAndDrop (Just p) Nothing))
+    = Just $ DragAndDrop (Just p) (Just coords)
+dropIfNeeded _ c = c
 
 -- Given a x, y index, check it can be a position on the grid.
 legit :: (Num a, Ord a) => (a, a) -> Bool

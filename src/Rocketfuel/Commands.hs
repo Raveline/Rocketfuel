@@ -5,9 +5,11 @@ module Rocketfuel.Commands (
 import Rocketfuel.Types
 import Rocketfuel.Grid
 
-execute :: Command -> GameContext -> GameContext
-execute (DragAndDrop (Just p1) (Just p2)) gc = swap p1 p2 gc
-execute _ gc = gc
+execute :: Maybe Command -> GameContext -> GameContext
+execute com context = maybe context (execute' context) com
+    where
+        execute' gc (DragAndDrop (Just p1) (Just p2)) = swap p1 p2 gc
+        execute' gc _ = gc
 
 swap :: Position -> Position -> GameContext -> GameContext
 swap p1 p2 gc@(GameContext g _) = if p1 /= p2 && orthoClose p1 p2 

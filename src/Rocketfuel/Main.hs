@@ -8,10 +8,14 @@ import qualified Graphics.UI.GLUT as GLUT
 import Graphics.Gloss.Rendering
 import FRP.Elerea.Simple
 
+import Rocketfuel.Types
+import qualified Rocketfuel.Commands as Commands
 import Rocketfuel.Display
 import Rocketfuel.Commands
 import Rocketfuel.Input
 
+defaultCommand :: Maybe Command
+defaultCommand = Nothing
 
 main :: IO()
 main = do let width = 800
@@ -23,12 +27,14 @@ main = do let width = 800
           glossState <- initState
           resources <- loadResources
           baseContext <- buildContext
+          let baseCommand = defaultCommand
           -- Get a window and loop
           withWindow width height "Rocketfuel" $ \window -> do
             -- Prepare the FRP network
             network <- start $ do
-                gameContext <- transfer baseContext updateContext mouse
-                return $ displayContext window (width, height) glossState resources <$> grid `fmap` gameContext
+                command <- transfer baseCommand updateCommand mouse
+                newContext <- transfer baseContext Commands.execute command
+                return $ displayContext window (width, height) glossState resources <$> grid `fmap` newContext
             fix $ \loop -> do
                 readMouse window mouseSink
                 join network
