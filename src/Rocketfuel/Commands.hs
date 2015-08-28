@@ -7,13 +7,15 @@ import Control.Monad
 import Control.Monad.Random
 
 import Rocketfuel.Types
-import Rocketfuel.Grid
+import Rocketfuel.Grid 
 
-updateContext :: GameContext -> IO GameContext
-updateContext context = do let baseGrid = grid context
-                           (newGrid, effects) <- afterMove baseGrid
-                           let finalContext = context { grid = newGrid }
-                           return finalContext
+updateContext :: Maybe Command -> (GameContext, StdGen) -> (GameContext, StdGen)
+updateContext command (context, generator) = 
+    let contextAfterCommand = runCommand command context
+        baseGrid = grid contextAfterCommand
+        ((newGrid, effects), newGenerator) = runRand (afterMove baseGrid) generator
+        finalContext = context { grid = newGrid }
+    in (finalContext, newGenerator)
 
 runCommand :: Maybe Command -> GameContext -> GameContext
 runCommand com context = maybe context (process' context) com

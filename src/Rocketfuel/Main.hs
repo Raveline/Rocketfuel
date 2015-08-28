@@ -35,8 +35,8 @@ main = do let width = 800
             -- Prepare the FRP network
             network <- start $ do
                 command <- transfer baseCommand updateCommand mouse
-                newContext <- transfer baseContext runCommand command
-                return $ displayContext window (width, height) glossState resources <$> grid `fmap` newContext
+                newContext <- transfer (baseContext, randomGenerator) updateContext command
+                return $ displayContext window (width, height) glossState resources <$> (grid . fst) `fmap` newContext
             fix $ \loop -> do
                 readMouse window mouseSink
                 join network
