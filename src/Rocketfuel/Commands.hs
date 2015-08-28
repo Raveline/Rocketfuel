@@ -1,15 +1,27 @@
 module Rocketfuel.Commands (
-    execute
+    runCommand,
+    updateContext
 ) where
 
-import Rocketfuel.Types
-import Rocketfuel.Grid
+import Control.Monad
+import Control.Monad.Random
 
-execute :: Maybe Command -> GameContext -> GameContext
-execute com context = maybe context (execute' context) com
+import Rocketfuel.Types
+import Rocketfuel.Grid 
+
+updateContext :: Maybe Command -> (GameContext, StdGen) -> (GameContext, StdGen)
+updateContext command (context, generator) = 
+    let contextAfterCommand = runCommand command context
+        baseGrid = grid contextAfterCommand
+        ((newGrid, effects), newGenerator) = runRand (afterMove baseGrid) generator
+        finalContext = context { grid = newGrid }
+    in (finalContext, newGenerator)
+
+runCommand :: Maybe Command -> GameContext -> GameContext
+runCommand com context = maybe context (process' context) com
     where
-        execute' gc (DragAndDrop (Just p1) (Just p2)) = swap p1 p2 gc
-        execute' gc _ = gc
+        process' gc (DragAndDrop (Just p1) (Just p2)) = swap p1 p2 gc
+        process' gc _ = gc
 
 swap :: Position -> Position -> GameContext -> GameContext
 swap p1 p2 gc@(GameContext g _) = if p1 /= p2 && orthoClose p1 p2 

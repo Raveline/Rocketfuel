@@ -119,7 +119,7 @@ gravityLoop g
 -- - If no matches were made, return the grid and the effects.
 afterMove :: (MonadRandom r) => Grid -> r (Grid, [Effect])
 afterMove = afterMove' []
-    where
+    where 
         afterMove' :: (MonadRandom r) => [Effect] -> Grid -> r (Grid, [Effect])
         afterMove' eff g = case runWriter (emptyGrid g) of
                             (g', []) -> return (g', eff)
