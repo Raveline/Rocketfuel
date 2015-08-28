@@ -2,6 +2,7 @@
 import Control.Monad (unless, join, when)
 import Control.Monad.Fix
 import Control.Concurrent (threadDelay)
+import Control.Monad.Random
 
 import "GLFW-b" Graphics.UI.GLFW as GLFW
 import qualified Graphics.UI.GLUT as GLUT
@@ -9,7 +10,7 @@ import Graphics.Gloss.Rendering
 import FRP.Elerea.Simple
 
 import Rocketfuel.Types
-import qualified Rocketfuel.Commands as Commands
+import Rocketfuel.Commands
 import Rocketfuel.Display
 import Rocketfuel.Commands
 import Rocketfuel.Input
@@ -28,12 +29,13 @@ main = do let width = 800
           resources <- loadResources
           baseContext <- buildContext
           let baseCommand = defaultCommand
+          randomGenerator <- newStdGen
           -- Get a window and loop
           withWindow width height "Rocketfuel" $ \window -> do
             -- Prepare the FRP network
             network <- start $ do
                 command <- transfer baseCommand updateCommand mouse
-                newContext <- transfer baseContext Commands.execute command
+                newContext <- transfer baseContext runCommand command
                 return $ displayContext window (width, height) glossState resources <$> grid `fmap` newContext
             fix $ \loop -> do
                 readMouse window mouseSink
