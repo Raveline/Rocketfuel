@@ -54,8 +54,8 @@ displayContext window (w, h) st res g = do
 -- | Take a list of list, and index it so that we can use those
 -- as index of line and columns.
 --
--- >>> idxListOfList $ ["word", "work", "worm"]
--- [(0,[(0,'w'),(1,'o'),('r',2),(3,'d')]), (1,[(0,'w'),(1,'o'),(2,'r'),(3,'k')])]
+-- >>> idxListOfList $ ["word", "work"]
+-- [(0,[(0,'w'),(1,'o'),(2,'r'),(3,'d')]),(1,[(0,'w'),(1,'o'),(2,'r'),(3,'k')])]
 -- 
 idxListOfList :: [[a]] -> [(Integer, [(Integer, a)])]
 idxListOfList = zip [0..] . map (zip [0..])
