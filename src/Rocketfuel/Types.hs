@@ -1,7 +1,9 @@
 module Rocketfuel.Types (
     Grid,
+    GameGrid,
     Line,
     Position,
+    Moves,
     Cell (..), 
     Effect(..),
     Swap(..),
@@ -9,6 +11,8 @@ module Rocketfuel.Types (
     Command (..),
     World (..)
 ) where
+
+import Data.Natural
 
 -- The components of a Grid
 data Cell
@@ -29,14 +33,17 @@ data Effect = Effect { _type :: Cell,
                        _size :: Int }
     deriving(Show)
 
--- A Grid is a list of lines
-type Grid = [Line]
+type Grid a = [[a]]
+
+type Moves = [Maybe Natural]
+type GameGrid = Grid (Maybe Cell)
+
 -- A Line is a list of potential cells
 type Line = [Maybe Cell]
 
 -- The main container for a game, made of a grid
 -- and the general world context
-data GameContext = GameContext { grid :: Grid,
+data GameContext = GameContext { grid :: GameGrid,
                                  world :: World }
 
 -- This type should represent the situation of the rocket,

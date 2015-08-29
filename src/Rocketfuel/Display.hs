@@ -44,7 +44,7 @@ loadResources = do res <- mapM loadJuicyPNG (M.elems resources)
                     then error "Missing resources"
                     else return $ M.fromList $ zip (M.keys resources) (catMaybes res)
 
-displayContext :: Window -> (Int, Int) -> State -> CellTextures -> Grid -> IO ()
+displayContext :: Window -> (Int, Int) -> State -> CellTextures ->GameGrid -> IO ()
 displayContext window (w, h) st res g = do
     displayPicture (w,h) white st (viewPortScale ortho0_0vp) 
         $ uncurry translate (viewPortTranslate ortho0_0vp) (displayGrid g res)
@@ -60,9 +60,9 @@ displayContext window (w, h) st res g = do
 idxListOfList :: [[a]] -> [(Integer, [(Integer, a)])]
 idxListOfList = zip [0..] . map (zip [0..])
 
-displayGrid :: Grid -> CellTextures -> Picture
-displayGrid grid res
-    = Pictures . catMaybes . concatMap (pictureLine res) . idxListOfList $ grid
+displayGrid :: GameGrid -> CellTextures -> Picture
+displayGrid _grid res
+    = Pictures . catMaybes . concatMap (pictureLine res) . idxListOfList $ _grid
 
 pictureLine :: CellTextures -> (Integer, [(Integer, Maybe Cell)]) -> [Maybe Picture]
 pictureLine res (y, xx) = map (uncurry (pictureCell res y)) xx

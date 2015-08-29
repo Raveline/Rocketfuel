@@ -24,7 +24,7 @@ generateRandomCell = getRandomR'(Fuel, Navigate)
 generateRandomLine :: (MonadRandom r) => r Line
 generateRandomLine = replicateM 8 (liftM Just generateRandomCell)
 
-generateRandomGrid :: (MonadRandom r) => r Grid
+generateRandomGrid :: (MonadRandom r) => r GameGrid
 generateRandomGrid = replicateM 8 generateRandomLine
 
 emptyAndLogIfAboveThree :: Line -> Writer [Effect] Line
@@ -45,22 +45,22 @@ emptyRepeted l = do groups <- return . group $ l
 -- 
 -- >>> rotateGrid [[Just Fuel,Just Repair,Just Trade],[Just Fuel,Just Shoot,Just Navigate],[Just Fuel,Just Trade,Just Trade]]
 -- [[Just Fuel,Just Fuel,Just Fuel],[Just Repair,Just Shoot,Just Trade],[Just Trade,Just Navigate,Just Trade]]
-rotateGrid :: Grid -> Grid
+rotateGrid :: Grid a -> Grid a
 rotateGrid = transpose
 
 -- | Basic utility to get a 90° counterclockwise 90° rotation on the grid.
 -- >>> rotateGrid [[Just Fuel,Just Fuel,Just Fuel],[Just Repair,Just Shoot,Just Trade],[Just Trade,Just Navigate,Nothing]]
 -- [[Just Fuel,Just Repair,Just Trade],[Just Fuel,Just Shoot,Just Navigate],[Just Fuel,Just Trade,Nothing]]
-unrotateGrid :: Grid -> Grid
+unrotateGrid :: Grid a -> Grid a
 unrotateGrid = transpose . transpose . transpose
 
 -- | The main matching function that will look for matches in lines and columns,
 -- and log each matches.
-emptyGrid :: Grid -> Writer [Effect] Grid
+emptyGrid :: GameGrid -> Writer [Effect] GameGrid
 emptyGrid g = emptyLines g >>= emptyColumns
-    where emptyLines :: Grid -> Writer [Effect] Grid
+    where emptyLines :: GameGrid -> Writer [Effect] GameGrid
           emptyLines = mapM emptyRepeted
-          emptyColumns :: Grid -> Writer [Effect] Grid
+          emptyColumns :: GameGrid -> Writer [Effect] GameGrid
           emptyColumns g' = do let rotated = rotateGrid g'
                                columnsEmptied <- emptyLines rotated
                                return $ unrotateGrid columnsEmptied
@@ -81,7 +81,7 @@ emptyGrid g = emptyLines g >>= emptyColumns
 --
 -- >>> gravity [[Just Fuel,Just Fuel,Just Repair,Just Shoot],[Nothing,Nothing,Nothing,Nothing],[Just Fuel,Nothing,Just Trade,Nothing]]
 -- [[Nothing,Nothing,Nothing,Nothing],[Just Fuel,Nothing,Just Repair,Nothing],[Just Fuel,Just Fuel,Just Trade,Just Shoot]]
-gravity :: Grid -> Grid
+gravity :: GameGrid -> GameGrid
 gravity = tail . unrotateGrid . map gravityColumn . rotateGrid
     where 
           gravityColumn :: Line -> Line
@@ -95,11 +95,11 @@ gravity = tail . unrotateGrid . map gravityColumn . rotateGrid
           anyNull (f, s) = null f || null s
 
 -- |Used before calling gravity. 
-prependGrid :: (MonadRandom r) => Grid -> r Grid
+prependGrid :: (MonadRandom r) => GameGrid -> r GameGrid
 prependGrid ls = do newLine <- generateRandomLine 
                     return $ newLine:ls
 
-containsEmptyCells :: Grid -> Bool
+containsEmptyCells :: GameGrid -> Bool
 -- |Check if a grill contains any empty cell.
 -- >>> containsEmptyCells [[Just Fuel, Just Fuel], [Nothing, Just Shoot]]
 -- True
@@ -108,7 +108,7 @@ containsEmptyCells :: Grid -> Bool
 containsEmptyCells = any isNothing . concat
 
 -- | Call gravity till there is no empty cell left in the grid
-gravityLoop :: (MonadRandom r) => Grid -> r Grid
+gravityLoop :: (MonadRandom r) => GameGrid -> r GameGrid
 gravityLoop g
     | containsEmptyCells g  = liftM gravity (prependGrid g) >>= gravityLoop
     | otherwise =  return g
@@ -117,10 +117,10 @@ gravityLoop g
 -- - Check for matchs.
 -- - If matches were made, apply gravity and loop.
 -- - If no matches were made, return the grid and the effects.
-afterMove :: (MonadRandom r) => Grid -> r (Grid, [Effect])
+afterMove :: (MonadRandom r) => GameGrid -> r (GameGrid, [Effect])
 afterMove = afterMove' []
     where 
-        afterMove' :: (MonadRandom r) => [Effect] -> Grid -> r (Grid, [Effect])
+        afterMove' :: (MonadRandom r) => [Effect] -> GameGrid -> r (GameGrid, [Effect])
         afterMove' eff g = case runWriter (emptyGrid g) of
                             (g', []) -> return (g', eff)
                             (g', e) -> do afterGravity <- gravityLoop g'
@@ -132,7 +132,7 @@ afterMove = afterMove' []
 -- 2°) Swap the position in the single array
 -- 3°) Transform the array back into a list
 --
-applySwap :: Swap -> Grid -> Grid
+applySwap :: Swap -> GameGrid -> GameGrid
 applySwap (Swap p1 p2) g = rebuild . elems $ toArray // [(oneIdx, twoValue), (twoIdx, oneValue)]
     where
         toArray :: Array Integer Cell
