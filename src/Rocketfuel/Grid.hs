@@ -71,16 +71,16 @@ emptyGrid g = emptyLines g >>= emptyColumns
 -- |Find the index of the LAST element of a list
 -- matching a predicate.
 -- >>> findLastIndex (==2) [2,2,2,2]
--- Just 3
+-- Just (Natural 3)
 -- >>> findLastIndex (==2) []
 -- Nothing
 -- >>> findLastIndex (==2) [1,3,5]
 -- Nothing
--- >>> findLastIndex (=='z') "Zoning zoning"
--- Just 7
+-- >>> findLastIndex (=='z') "zoning zoning"
+-- Just (Natural 7)
 findLastIndex :: (a -> Bool) -> [a] -> Maybe Natural
 findLastIndex p xs = fmap reverseIndex (findIndex p . reverse $ xs)
-    where maxIndex = (-) 1 . length $ xs
+    where maxIndex = length xs - 1
           reverseIndex :: Int -> Natural
           reverseIndex = natural . fromIntegral . (-) maxIndex
 
