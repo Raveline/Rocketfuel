@@ -3,7 +3,6 @@ module Rocketfuel.Commands (
     updateContext
 ) where
 
-import Control.Monad
 import Control.Monad.Random
 
 import Rocketfuel.Types
@@ -13,7 +12,7 @@ updateContext :: Maybe Command -> (GameContext, StdGen) -> (GameContext, StdGen)
 updateContext command (context, generator) = 
     let contextAfterCommand = runCommand command context
         baseGrid = grid contextAfterCommand
-        ((newGrid, effects), newGenerator) = runRand (afterMove baseGrid) generator
+        ((newGrid, _), newGenerator) = runRand (afterMove baseGrid) generator
         finalContext = context { grid = newGrid }
     in (finalContext, newGenerator)
 

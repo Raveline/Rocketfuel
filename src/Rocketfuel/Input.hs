@@ -22,7 +22,7 @@ updateCommand :: Click -> Maybe Command -> Maybe Command
 updateCommand click comm = readClick click . cleanCommand $ comm
     where 
         cleanCommand :: Maybe Command -> Maybe Command
-        cleanCommand (Just (DragAndDrop (Just x) (Just y))) = Nothing
+        cleanCommand (Just (DragAndDrop (Just _) (Just _))) = Nothing
         cleanCommand other = other
         readClick :: Click -> Maybe Command -> Maybe Command
         readClick (Click (x, y) status) com = 

@@ -12,7 +12,6 @@ import FRP.Elerea.Simple
 import Rocketfuel.Types
 import Rocketfuel.Commands
 import Rocketfuel.Display
-import Rocketfuel.Commands
 import Rocketfuel.Input
 
 defaultCommand :: Maybe Command
