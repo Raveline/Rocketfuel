@@ -1,13 +1,15 @@
 module Rocketfuel.Grid (
     generateRandomGrid,
     afterMove,
-    applySwap
+    applySwap,
+    getFallingTiles
 ) where
 
 import Data.Array
 import Data.List
 import Data.List.Split (chunksOf)
 import Data.Maybe
+import Data.Natural
 import Control.Monad.Writer
 import Control.Monad.Random
 
@@ -65,20 +67,27 @@ emptyGrid g = emptyLines g >>= emptyColumns
                                columnsEmptied <- emptyLines rotated
                                return $ unrotateGrid columnsEmptied
 
--- |In order to simulate gravity, we proceed like this :
--- 1°) We prepend to the grid a generated line
--- (this is done in another function, to keep this one pure)
--- The generated line CANNOT contain empty cells.
--- 2°) We rotate the grid, so as to be able to map on its column.
--- 3°) For each column, apply this simple rule :
---     - If the current element is not empty...
---     - and the next element is empty...
---     - ... then the current element will take its place
--- 4°) Remove the first line, containing the generated, random cells
--- This will make all cells go down one notch if they should.
--- Then, new possible match should be checked again before running
--- this till there is no change.
---
+-- |Find the index of the LAST element of a list
+-- matching a predicate.
+-- >>> findLastIndex (==2) [2,2,2,2]
+-- Just 3
+-- >>> findLastIndex (==2) []
+-- Nothing
+-- >>> findLastIndex (==2) [1,3,5]
+-- Nothing
+-- >>> findLastIndex (=='z') "Zoning zoning"
+-- Just 7
+findLastIndex :: (a -> Bool) -> [a] -> Maybe Natural
+findLastIndex p xs = fmap reverseIndex (findIndex p . reverse $ xs)
+    where maxIndex = (-) 1 . length $ xs
+          reverseIndex :: Int -> Natural
+          reverseIndex = natural . fromIntegral . (-) maxIndex
+
+getFallingTiles :: GameGrid -> Moves
+getFallingTiles = map gravityColumn . rotateGrid
+    where gravityColumn :: Line -> Maybe Natural
+          gravityColumn = findLastIndex isNothing
+
 -- >>> gravity [[Just Fuel,Just Fuel,Just Repair,Just Shoot],[Nothing,Nothing,Nothing,Nothing],[Just Fuel,Nothing,Just Trade,Nothing]]
 -- [[Nothing,Nothing,Nothing,Nothing],[Just Fuel,Nothing,Just Repair,Nothing],[Just Fuel,Just Fuel,Just Trade,Just Shoot]]
 gravity :: GameGrid -> GameGrid
