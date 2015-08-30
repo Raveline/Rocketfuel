@@ -2,7 +2,8 @@ module Rocketfuel.Grid (
     generateRandomGrid,
     afterMove,
     applySwap,
-    getFallingTiles
+    getFallingTiles,
+    hasMoves
 ) where
 
 import Data.Array
@@ -153,3 +154,14 @@ applySwap (Swap p1 p2) g = rebuild . elems $ toArray // [(oneIdx, twoValue), (tw
         oneValue = toArray ! oneIdx
         twoValue = toArray ! twoIdx
         rebuild = map (map Just) . chunksOf 8
+
+-- |Given a list of moves, check if there is any current move.
+-- This simply means checking that the list of Moves (one per column in the grid)
+-- is only made out of Nothing.
+--
+-- >>> hasMoves [Nothing, Nothing, Nothing]
+-- False
+-- >>> hasMoves [Nothing, Nothing, Just 3]
+-- True
+hasMoves :: Moves -> Bool
+hasMoves = any (isJust)
