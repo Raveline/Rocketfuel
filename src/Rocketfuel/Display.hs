@@ -36,7 +36,7 @@ cellToResources = flip (M.!)
 
 buildContext :: IO GameContext
 buildContext = do g <- generateRandomGrid
-                  return $ GameContext g (World 400 0)
+                  return $ GameContext g [] (World 400 0)
 
 loadResources :: IO CellTextures
 loadResources = do res <- mapM loadJuicyPNG (M.elems resources)

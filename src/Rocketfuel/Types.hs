@@ -44,6 +44,7 @@ type Line = [Maybe Cell]
 -- The main container for a game, made of a grid
 -- and the general world context
 data GameContext = GameContext { grid :: GameGrid,
+                                 currentMoves :: Moves,
                                  world :: World }
 
 -- This type should represent the situation of the rocket,

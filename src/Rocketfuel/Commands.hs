@@ -12,9 +12,10 @@ updateContext :: Maybe Command -> (GameContext, StdGen) -> (GameContext, StdGen)
 updateContext command (context, generator) = 
     let contextAfterCommand = runCommand command context
         baseGrid = grid contextAfterCommand
-        ((newGrid, _), newGenerator) = runRand (afterMove baseGrid) generator
-        finalContext = context { grid = newGrid }
-    in (finalContext, newGenerator)
+        moves = getFallingTiles baseGrid
+        finalContext = context { grid = baseGrid,
+                                 currentMoves = moves }
+    in (finalContext, generator)
 
 runCommand :: Maybe Command -> GameContext -> GameContext
 runCommand com context = maybe context (process' context) com
@@ -23,7 +24,7 @@ runCommand com context = maybe context (process' context) com
         process' gc _ = gc
 
 swap :: Position -> Position -> GameContext -> GameContext
-swap p1 p2 gc@(GameContext g _) = if p1 /= p2 && orthoClose p1 p2 
+swap p1 p2 gc@(GameContext g _ _) = if p1 /= p2 && orthoClose p1 p2 
                     then gc { grid = applySwap (Swap p1 p2) g }
                     else gc
 
