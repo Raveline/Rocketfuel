@@ -1,0 +1,23 @@
+resolver: lts-5.12
+
+packages:
+- '.'
+# Current version of gloss-juicy is not compatible with gloss 1.10.1.1
+# Till it is fixed, we'll use the patch provided by Trofi on github.
+- location:
+    git: https://github.com/trofi/gloss-juicy
+    commit: 0e77c8df3a3a20ca4fd648803084edf34e2363d2
+  extra-dep: true
+
+extra-deps:
+- elerea-2.8.0
+- gloss-1.10.1.1
+- gloss-rendering-1.10.1.1
+- naturals-0.2.0.2
+- text-1.2.2.1
+
+# Override default flag values for local packages and extra-deps
+flags: {}
+
+# Extra package databases containing global packages
+extra-package-dbs: []
